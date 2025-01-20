@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú Móvil con Animación de Caída y Botón Cerrar</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Open Sans', sans-serif;
+            background-color: rgba(52, 73, 94, 0.9);
+            background-size: 400% 400%;
+            animation: backgroundMove 10s ease infinite;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        @keyframes backgroundMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Menú móvil */
+        .menu-mobile {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(44, 62, 80, 0.95);
+            color: white;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 1001;
+            opacity: 0;
+            transform: translateY(-100%);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .menu-mobile.active {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .menu-mobile a {
+            font-size: 2em;
+            margin: 20px 0;
+            text-decoration: none;
+            color: white;
+            padding: 12px 30px;
+            transition: background-color 0.3s, color 0.3s, transform 0.3s;
+            border-radius: 10px;
+            background: rgba(52, 73, 94, 0.8);
+            transform: translateY(-30px);
+            opacity: 0;
+            animation: dropIn 0.5s forwards;
+        }
+
+        @keyframes dropIn {
+            0% {
+                transform: translateY(-30px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .menu-mobile a:nth-child(1) {
+            animation-delay: 0.2s;
+        }
+
+        .menu-mobile a:nth-child(2) {
+            animation-delay: 0.4s;
+        }
+
+        .menu-mobile a:nth-child(3) {
+            animation-delay: 0.6s;
+        }
+
+        .menu-mobile a:nth-child(4) {
+            animation-delay: 0.8s;
+        }
+
+        .menu-mobile .cerrar-btn {
+            font-size: 1.5em;
+            margin-top: 30px;
+            text-decoration: none;
+            color: white;
+            padding: 10px 30px;
+            background: #e74c3c;
+            border-radius: 10px;
+            transition: background-color 0.3s, color 0.3s;
+            transform: translateY(-30px);
+            opacity: 0;
+            animation: dropIn 0.5s forwards;
+            animation-delay: 1s;
+        }
+
+        .menu-mobile .cerrar-btn:hover {
+            background-color: #c0392b;
+            color: white;
+        }
+
+        /* Menú tipo hamburguesa para móvil */
+        .menu-toggle {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            width: 30px;
+            height: 25px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            z-index: 1002;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+
+        .menu-toggle div {
+            width: 30px;
+            height: 4px;
+            background-color: white;
+            border-radius: 5px;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .menu-toggle.active div:nth-child(1) {
+            transform: rotate(45deg);
+            position: relative;
+            top: 7px;
+        }
+
+        .menu-toggle.active div:nth-child(2) {
+            opacity: 0;
+        }
+
+        .menu-toggle.active div:nth-child(3) {
+            transform: rotate(-45deg);
+            position: relative;
+            top: -7px;
+        }
+
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: flex;
+            }
+        }
+
+        /* Estilos de la página de contacto */
+        #contacto {
+            background-color: #fff;
+            width: 100%;
+            max-width: 700px;
+            padding: 40px;
+           
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+            margin: 20px auto;
+            box-sizing: border-box;
+            transition: transform 0.5s ease;
+            opacity: 0;
+        }
+
+        #contacto.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        h2 {
+            font-size: 2.5em;
+            color: #2c3e50;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+            transition: opacity 1s ease, transform 1s ease;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        h2.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        p {
+            font-size: 1.1em;
+            line-height: 1.5;
+            color: #555;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        label {
+            font-size: 1.2em;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        input, textarea {
+            width: calc(100% - 30px);
+            padding: 15px;
+            font-size: 1.1em;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #f4f4f4;
+            margin-bottom: 15px;
+            margin-left: 15px;
+            margin-right: 15px;
+            transition: background-color 0.3s, border 0.3s;
+        }
+
+        input:focus, textarea:focus {
+            background-color: #fff;
+            border: 1px solid #3498db;
+        }
+
+        button[type="submit"] {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.2em;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        button[type="submit"]:hover {
+            background-color: #2980b9;
+        }
+
+        #informacion-contacto {
+            margin-top: 30px;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #informacion-contacto h3 {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        #informacion-contacto p {
+            font-size: 1.1em;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        footer {
+            text-align: center;
+            padding: 15px;
+            background: #2c3e50;
+            color: white;
+            width: 100%;
+            position: fixed;
+            bottom: 0;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2ecc71;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+            font-size: 16px;
+        }
+
+        .notification.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Botón hamburguesa para abrir el menú -->
+    <button class="menu-toggle" aria-label="Abrir menú">
+        <div></div>
+        <div></div>
+        <div></div>
+    </button>
+
+    <!-- Menú móvil -->
+    <div class="menu-mobile">
+        <a href="index.html">Inicio</a>
+        <a href="productos.html">Productos</a>
+        <a href="contacto.html">Contacto</a>
+        <a href="paquete.html">Paquete</a>
+        <a href="#" class="cerrar-btn">Cerrar</a>
+    </div>
+<br><br>
+    <!-- Contnedor para centrar la sección de contacto -->
+    <div class="contact-container">
+        <section id="contacto">
+            <h2>Contacto</h2>
+            <p>Si tienes alguna pregunta o necesitas más información sobre nuestros servicios, no dudes en contactarnos.</p>
+
+            <form id="contact-form">
+                <div class="form-group">
+                    <label for="nombre">Nombre:</label>
+                    <input type="text" id="nombre" name="nombre" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="correo">Correo electrónico:</label>
+                    <input type="email" id="correo" name="correo" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="telefono">Teléfono (opcional):</label>
+                    <input type="tel" id="telefono" name="telefono">
+                </div>
+
+                <div class="form-group">
+                    <label for="mensaje">Mensaje:</label>
+                    <textarea id="mensaje" name="mensaje" rows="4" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit">Enviar mensaje</button>
+                </div>
+            </form>
+
+            <div id="informacion-contacto">
+                <h3>Información adicional</h3>
+                <p><strong>Teléfono:</strong> +1 (730) 227-1566</p>
+                <p><strong>Dirección:</strong> Calle 23 No. 443, entre 3ra y 4ta, Vedado, La Habana.</p>
+            </div>
+        </section>
+        <br><br><br><br>
+    </div>
+
+    <!-- Notificación tipo "toast" -->
+    <div id="success-notification" class="notification">
+        ¡Su mensaje ha sido enviado correctamente! Espere que los administradores respondan. Muchas gracias por elegirnos.
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Tu Empresa. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        // Código de manejo de formulario
+        const form = document.getElementById('contact-form');
+        const successNotification = document.getElementById('success-notification');
+        const contacto = document.getElementById('contacto');
+        const h2 = contacto.querySelector('h2');
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            // Mostrar la notificación
+            successNotification.classList.add('active');
+
+            // Ocultar la notificación después de 5 segundos
+            setTimeout(function() {
+                successNotification.classList.remove('active');
+            }, 5000);
+
+            // Limpiar el formulario
+            form.reset();
+        });
+
+        // Activar animaciones
+        setTimeout(() => {
+            contacto.classList.add('active');
+            h2.classList.add('active');
+        }, 200);
+
+        // Función para abrir y cerrar el menú móvil
+        const menuToggle = document.querySelector('.menu-toggle');
+        const menuMobile = document.querySelector('.menu-mobile');
+        const cerrarBtn = document.querySelector('.cerrar-btn');
+
+        menuToggle.addEventListener('click', () => {
+            menuMobile.classList.toggle('active');
+            menuToggle.classList.toggle('active');
+        });
+
+        cerrarBtn.addEventListener('click', () => {
+            menuMobile.classList.remove('active');
+            menuToggle.classList.remove('active');
+        });
+    </script>
+
+</body>
+</html>

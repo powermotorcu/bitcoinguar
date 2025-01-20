@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rastreo de Paquete</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Arial', sans-serif;
+    }
+    body {
+      background: linear-gradient(to right, #00bcd4, #0080ff);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+      color: #fff;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+      letter-spacing: 2px;
+    }
+
+    form {
+      background: rgba(255, 255, 255, 0.8);
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 30px;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeInUp 1s forwards;
+    }
+
+    @keyframes fadeInUp {
+      0% {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    label {
+      font-size: 1.3em;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    input {
+      font-size: 1em;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 2px solid #00bcd4;
+      border-radius: 5px;
+      width: 250px;
+      outline: none;
+      transition: 0.3s;
+    }
+
+    input:focus {
+      border-color: #0080ff;
+    }
+
+    button {
+      background-color: #0080ff;
+      color: white;
+      font-size: 1.2em;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #00bcd4;
+    }
+
+    #countdown {
+      font-size: 1.5em;
+      color: #ff6347;
+      margin-top: 20px;
+      text-align: center;
+      padding: 20px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      width: 80%;
+      max-width: 350px;
+      display: none;
+    }
+
+    #countdownMessage {
+      font-size: 1.2em;
+      color: #ff6347;
+      text-align: center;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    #processingMessage {
+      font-size: 1.5em;
+      color: #ff6347;
+      text-align: center;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    #successMessage {
+      font-size: 2em;
+      color: #32cd32;
+      margin-top: 20px;
+      text-align: center;
+      font-weight: bold;
+      display: none;
+      animation: fadeIn 1s forwards;
+    }
+
+    #nineDayCountdown {
+      font-size: 2em;
+      font-weight: bold;
+      color: #0080ff;
+      margin-top: 30px;
+      text-align: center;
+      padding: 15px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      display: none;
+      animation: fadeIn 1s forwards;
+    }
+
+    #map {
+      width: 80%;
+      height: 500px;
+      margin-top: 40px;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      display: none;
+      opacity: 0;
+      animation: fadeIn 1s forwards;
+    }
+
+    @keyframes fadeIn {
+      0% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+
+    .marker-icon {
+      width: 30px;
+      height: 30px;
+      background-color: #ff6347;
+      border-radius: 50%;
+      display: block;
+      transform: translate(-50%, -50%);
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Rastreo de Paquete</h1>
+  <form id="trackingForm">
+    <label for="trackingNumber">Número de Seguimiento:</label>
+    <input type="text" id="trackingNumber" name="trackingNumber" required placeholder="Ingresa el número de seguimiento">
+    <button type="submit">Rastrear</button>
+  </form>
+  
+  <div id="processingMessage"></div>
+  <div id="countdownMessage"></div>
+  <div id="countdown"></div>
+  <div id="successMessage">¡Tu paquete ha llegado!</div>
+  <div id="nineDayCountdown"></div>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script>
+    const trackingForm = document.getElementById('trackingForm');
+    const countdownElement = document.getElementById('countdown');
+    const countdownMessageElement = document.getElementById('countdownMessage');
+    const processingMessage = document.getElementById('processingMessage');
+    const successMessage = document.getElementById('successMessage');
+    const nineDayCountdownElement = document.getElementById('nineDayCountdown');
+    const mapElement = document.getElementById('map');
+    
+    let startTime = null;
+    let remainingTime = null;
+    const totalTime = 27 * 60 * 60 * 1000; // 27 horas en milisegundos
+
+    // Recuperar el estado desde localStorage si existe
+    function retrieveState() {
+      const savedTrackingNumber = localStorage.getItem('trackingNumber');
+      const savedRemainingTime = localStorage.getItem('remainingTime');
+      const savedProcessing = localStorage.getItem('processing');
+      const savedMapState = localStorage.getItem('mapState');
+
+      if (savedTrackingNumber) {
+        document.getElementById('trackingNumber').value = savedTrackingNumber;
+        document.getElementById('trackingNumber').disabled = true;  // Deshabilitar el campo
+        document.querySelector('button').disabled = true;  // Deshabilitar el botón
+      }
+
+      if (savedRemainingTime) {
+        remainingTime = savedRemainingTime;
+        startCountdown();
+      }
+
+      if (savedProcessing === 'true') {
+        processingMessage.textContent = '¡Tu paquete ha llegado!';
+        startNineDayCountdown();
+        showMap();
+      }
+
+      if (savedMapState === 'shown') {
+        showMap();
+      }
+    }
+
+    // Manejo de la cuenta regresiva de 27 horas
+    function startCountdown() {
+      if (remainingTime <= 0) {
+        startTime = Date.now();
+        remainingTime = totalTime;
+      }
+      
+      countdownMessageElement.textContent = 'Tiempo estimado para que su pedido sea procesado y enviado';
+      countdownElement.style.display = 'block'; // Muestra el contador
+
+      const countdownInterval = setInterval(function() {
+        remainingTime -= 1000;
+        localStorage.setItem('remainingTime', remainingTime); // Guarda el tiempo restante
+        const hours = Math.floor(remainingTime / (1000 * 60 * 60));
+        const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+        countdownElement.textContent = `${hours}h ${minutes}m ${seconds}s`;
+
+        if (remainingTime <= 0) {
+          clearInterval(countdownInterval);
+          processingMessage.textContent = '¡Tu paquete ha llegado!';
+          
+          // Inicia la cuenta regresiva de 9 días y el mapa
+          startNineDayCountdown();
+          showMap();
+          localStorage.setItem('processing', 'true');
+        }
+      }, 1000);
+    }
+
+    // Manejo de la cuenta regresiva de 9 días
+    function startNineDayCountdown() {
+      let remainingNineDayTime = 9 * 24 * 60 * 60 * 1000; // 9 días en milisegundos
+      nineDayCountdownElement.style.display = 'block';
+
+      const nineDayInterval = setInterval(function() {
+        remainingNineDayTime -= 1000;
+        const days = Math.floor(remainingNineDayTime / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((remainingNineDayTime % (1000 * 60 * 60 * 24)) / (1000 * 60));
+        const minutes = Math.floor((remainingNineDayTime % (1000 * 60)) / 1000);
+        const seconds = Math.floor((remainingNineDayTime % 1000) / 1000);
+
+        nineDayCountdownElement.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+        if (remainingNineDayTime <= 0) {
+          clearInterval(nineDayInterval);
+        }
+      }, 1000);
+    }
+
+    // Muestra el mapa y configura el marcador
+    function showMap() {
+      mapElement.style.display = 'block';
+      const map = L.map(mapElement).setView([29.7604, -95.3698], 5); // Houston
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+
+      // Línea azul de Houston a La Habana
+      const latLngs = [
+        [29.7604, -95.3698], // Houston
+        [23.1136, -82.3666]  // La Habana
+      ];
+
+      const polyline = L.polyline(latLngs, { color: 'blue' }).addTo(map);
+      map.fitBounds(polyline.getBounds());
+
+      // Crear el marcador (signo de ubicación)
+      const markerIcon = L.divIcon({
+        className: 'marker-icon',
+        iconSize: [30, 30]
+      });
+
+      const marker = L.marker([29.7604, -95.3698], { icon: markerIcon }).addTo(map);
+
+      // Avanzar el marcador cada hora
+      const totalTimeInSeconds = 9 * 24 * 60 * 60; // 9 días en segundos
+      const stepTimeInSeconds = totalTimeInSeconds / (9 * 24); // Avance por hora
+
+      let elapsedTime = 0;
+      const moveMarker = setInterval(function() {
+        elapsedTime += stepTimeInSeconds;
+        const progress = elapsedTime / totalTimeInSeconds;
+
+        // Interpolación para calcular la posición del marcador
+        const lat = latLngs[0][0] + progress * (latLngs[1][0] - latLngs[0][0]);
+        const lng = latLngs[0][1] + progress * (latLngs[1][1] - latLngs[0][1]);
+
+        marker.setLatLng([lat, lng]);
+
+        if (progress >= 1) {
+          clearInterval(moveMarker);
+        }
+      }, 3600000); // 1 hora en milisegundos
+    }
+
+    trackingForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      const trackingNumber = document.getElementById('trackingNumber').value;
+
+      if (trackingNumber === '150817') {
+        localStorage.setItem('trackingNumber', trackingNumber);  // Guarda el número de seguimiento
+        trackingForm.style.display = 'none';  // Oculta el formulario
+        document.getElementById('trackingNumber').disabled = true;  // Deshabilitar el campo
+        document.querySelector('button').disabled = true;  // Deshabilitar el botón
+        startCountdown();
+      } else {
+        alert('Número de seguimiento incorrecto');
+      }
+    });
+
+    // Recupera el estado al cargar la página
+    retrieveState();
+  </script>
+</body>
+</html>
