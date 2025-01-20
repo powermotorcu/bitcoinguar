@@ -130,31 +130,6 @@
       animation: fadeIn 1s forwards;
     }
 
-    #nineDayCountdown {
-      font-size: 2em;
-      font-weight: bold;
-      color: #0080ff;
-      margin-top: 30px;
-      text-align: center;
-      padding: 15px;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.8);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-      display: none;
-      animation: fadeIn 1s forwards;
-    }
-
-    #map {
-      width: 80%;
-      height: 500px;
-      margin-top: 40px;
-      border-radius: 10px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-      display: none;
-      opacity: 0;
-      animation: fadeIn 1s forwards;
-    }
-
     @keyframes fadeIn {
       0% {
         opacity: 0;
@@ -162,16 +137,6 @@
       100% {
         opacity: 1;
       }
-    }
-
-    .marker-icon {
-      width: 30px;
-      height: 30px;
-      background-color: #ff6347;
-      border-radius: 50%;
-      display: block;
-      transform: translate(-50%, -50%);
-      position: relative;
     }
   </style>
 </head>
@@ -188,18 +153,13 @@
   <div id="countdownMessage"></div>
   <div id="countdown"></div>
   <div id="successMessage">¡Tu paquete ha llegado!</div>
-  <div id="nineDayCountdown"></div>
-  <div id="map"></div>
 
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script>
     const trackingForm = document.getElementById('trackingForm');
     const countdownElement = document.getElementById('countdown');
     const countdownMessageElement = document.getElementById('countdownMessage');
     const processingMessage = document.getElementById('processingMessage');
     const successMessage = document.getElementById('successMessage');
-    const nineDayCountdownElement = document.getElementById('nineDayCountdown');
-    const mapElement = document.getElementById('map');
     
     let startTime = null;
     let remainingTime = null;
@@ -210,12 +170,11 @@
       const savedTrackingNumber = localStorage.getItem('trackingNumber');
       const savedRemainingTime = localStorage.getItem('remainingTime');
       const savedProcessing = localStorage.getItem('processing');
-      const savedMapState = localStorage.getItem('mapState');
 
       if (savedTrackingNumber) {
-        document.getElementById('trackingNumber').value = savedTrackingNumber;
         document.getElementById('trackingNumber').disabled = true;  // Deshabilitar el campo
         document.querySelector('button').disabled = true;  // Deshabilitar el botón
+        trackingForm.style.display = 'none'; // Ocultar formulario
       }
 
       if (savedRemainingTime) {
@@ -225,12 +184,7 @@
 
       if (savedProcessing === 'true') {
         processingMessage.textContent = '¡Tu paquete ha llegado!';
-        startNineDayCountdown();
-        showMap();
-      }
-
-      if (savedMapState === 'shown') {
-        showMap();
+        showSuccessMessage();
       }
     }
 
@@ -255,80 +209,15 @@
         if (remainingTime <= 0) {
           clearInterval(countdownInterval);
           processingMessage.textContent = '¡Tu paquete ha llegado!';
-          
-          // Inicia la cuenta regresiva de 9 días y el mapa
-          startNineDayCountdown();
-          showMap();
+          showSuccessMessage();
           localStorage.setItem('processing', 'true');
         }
       }, 1000);
     }
 
-    // Manejo de la cuenta regresiva de 9 días
-    function startNineDayCountdown() {
-      let remainingNineDayTime = 9 * 24 * 60 * 60 * 1000; // 9 días en milisegundos
-      nineDayCountdownElement.style.display = 'block';
-
-      const nineDayInterval = setInterval(function() {
-        remainingNineDayTime -= 1000;
-        const days = Math.floor(remainingNineDayTime / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((remainingNineDayTime % (1000 * 60 * 60 * 24)) / (1000 * 60));
-        const minutes = Math.floor((remainingNineDayTime % (1000 * 60)) / 1000);
-        const seconds = Math.floor((remainingNineDayTime % 1000) / 1000);
-
-        nineDayCountdownElement.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
-
-        if (remainingNineDayTime <= 0) {
-          clearInterval(nineDayInterval);
-        }
-      }, 1000);
-    }
-
-    // Muestra el mapa y configura el marcador
-    function showMap() {
-      mapElement.style.display = 'block';
-      const map = L.map(mapElement).setView([29.7604, -95.3698], 5); // Houston
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      }).addTo(map);
-
-      // Línea azul de Houston a La Habana
-      const latLngs = [
-        [29.7604, -95.3698], // Houston
-        [23.1136, -82.3666]  // La Habana
-      ];
-
-      const polyline = L.polyline(latLngs, { color: 'blue' }).addTo(map);
-      map.fitBounds(polyline.getBounds());
-
-      // Crear el marcador (signo de ubicación)
-      const markerIcon = L.divIcon({
-        className: 'marker-icon',
-        iconSize: [30, 30]
-      });
-
-      const marker = L.marker([29.7604, -95.3698], { icon: markerIcon }).addTo(map);
-
-      // Avanzar el marcador cada hora
-      const totalTimeInSeconds = 9 * 24 * 60 * 60; // 9 días en segundos
-      const stepTimeInSeconds = totalTimeInSeconds / (9 * 24); // Avance por hora
-
-      let elapsedTime = 0;
-      const moveMarker = setInterval(function() {
-        elapsedTime += stepTimeInSeconds;
-        const progress = elapsedTime / totalTimeInSeconds;
-
-        // Interpolación para calcular la posición del marcador
-        const lat = latLngs[0][0] + progress * (latLngs[1][0] - latLngs[0][0]);
-        const lng = latLngs[0][1] + progress * (latLngs[1][1] - latLngs[0][1]);
-
-        marker.setLatLng([lat, lng]);
-
-        if (progress >= 1) {
-          clearInterval(moveMarker);
-        }
-      }, 3600000); // 1 hora en milisegundos
+    // Mostrar mensaje de éxito
+    function showSuccessMessage() {
+      successMessage.style.display = 'block';
     }
 
     trackingForm.addEventListener('submit', function(event) {
